@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+/local
+
+.DS_Store
+*.swp
+*.swo
