@@ -11,12 +11,12 @@ BASEDIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 
-FACTSHEET = os.path.join(BASEDIR, 'SGS.sequences.fact.csv')
-SIEERAREPORT = os.path.join(BASEDIR, 'SGS.sequences.json')
+FACTSHEET = os.path.join(BASEDIR, 'data', 'SGS.sequences.fact.csv')
+SIEERAREPORT = os.path.join(BASEDIR, 'local', 'SGS.sequences.json')
 OUTPUTS = {
-    'PR': os.path.join(BASEDIR, 'prevalenceData', 'SGS.PRprevalence.csv'),
-    'RT': os.path.join(BASEDIR, 'prevalenceData', 'SGS.RTprevalence.csv'),
-    'IN': os.path.join(BASEDIR, 'prevalenceData', 'SGS.INprevalence.csv'),
+    'PR': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.PRprevalence.csv'),
+    'RT': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.RTprevalence.csv'),
+    'IN': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.INprevalence.csv'),
 }
 
 PREC3 = Decimal('1.000')
@@ -47,7 +47,7 @@ CONSENSUS = {
 }
 
 
-def aggregate_aa_prevalence(gene, sequences, seqsfact, subtype=None):
+def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
     result = OrderedDict()
     total = Counter()
     totalpt = defaultdict(set)
@@ -60,9 +60,9 @@ def aggregate_aa_prevalence(gene, sequences, seqsfact, subtype=None):
         for aa in all_aas:
             result[(pos, aa)] = 0
 
-    for seq in sequences:
-        accn = seq['inputSequence']['header'].split('.', 1)[0]
-        seqfact = seqsfact[accn]
+    for seqfact in seqsfact:
+        accn = seqfact['Accession']
+        seq = sequences[accn]
         seq_subtype = seq['subtypeText'].split(' (', 1)[0]
         if subtype is not None and subtype != seq_subtype:
             continue
@@ -108,18 +108,19 @@ def main():
     major_subtypes = [None, 'B', 'C', 'D', 'A']
     header = ['Gene', 'Subtype', 'Pos', 'AA', 'Pcnt', 'Count',
               'PosTotal', 'PatientCount', 'PatientPosTotal']
-    with open(SIEERAREPORT) as fp:
-        sequences = json.load(fp)
     with open(FACTSHEET) as fp:
         if fp.read(1) != '\ufeff':
             fp.seek(0)
-        seqsfact = csv.DictReader(fp)
-        seqsfact = {s['Accession']: s for s in seqsfact}
+        seqsfact = list(csv.DictReader(fp))
+    with open(SIEERAREPORT) as fp:
+        sequences = json.load(fp)
+        sequences = {s['inputSequence']['header'].split('.', 1)[0]: s
+                     for s in sequences}
     for gene in ('PR', 'RT', 'IN'):
         all_prevalence = []
         for subtype in major_subtypes:
             prevs = aggregate_aa_prevalence(
-                gene, sequences, seqsfact, subtype).values()
+                gene, seqsfact, sequences, subtype).values()
             all_prevalence.extend(prevs)
         with open(OUTPUTS[gene], 'w') as fp:
             writer = csv.DictWriter(fp, header)

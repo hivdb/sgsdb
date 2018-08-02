@@ -12,9 +12,9 @@ BASEDIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
 )
 
-FACTSHEET = os.path.join(BASEDIR, 'SGS.sequences.fact.csv')
-SIEERAREPORT = os.path.join(BASEDIR, 'SGS.sequences.json')
-OUTPUT = os.path.join(BASEDIR, 'SGS.study-summary.csv')
+FACTSHEET = os.path.join(BASEDIR, 'data', 'SGS.sequences.fact.csv')
+SIEERAREPORT = os.path.join(BASEDIR, 'local', 'SGS.sequences.json')
+OUTPUT = os.path.join(BASEDIR, 'data', 'SGS.study-summary.csv')
 
 OUTPUT_HEADER = [
     'Study', '# Patients', '# Sequences', 'Subtypes',

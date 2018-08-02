@@ -6,30 +6,30 @@ library(gridExtra)
 SUBTYPE = 'SubtypeB'
 SHORT_SUBTYPE = 'B'
 
-# SUBTYPE = 'All'
-# SHORT_SUBTYPE = ''
+SUBTYPE = 'All'
+SHORT_SUBTYPE = ''
 
 DB_PREVALENCE_DATA = read.csv(
   sprintf(
-    '~/Dropbox/NGSPcnts/SGS/prevalenceData/dbAminoAcidVariants%s.csv',
+    'data/prevalence/dbAminoAcidVariants%s.csv',
     SUBTYPE
   )
 )
 
-SGS_PR=read.csv('~/Dropbox/NGSPcnts/SGS/prevalenceData/SGS.PRprevalence.csv')
-SGS_RT=read.csv('~/Dropbox/NGSPcnts/SGS/prevalenceData/SGS.RTprevalence.csv')
-SGS_IN=read.csv('~/Dropbox/NGSPcnts/SGS/prevalenceData/SGS.INprevalence.csv')
+SGS_PR=read.csv('data/prevalence/SGS.PRprevalence.csv')
+SGS_RT=read.csv('data/prevalence/SGS.RTprevalence.csv')
+SGS_IN=read.csv('data/prevalence/SGS.INprevalence.csv')
 
 COMP_PR = sprintf(
-  '~/Dropbox/NGSPcnts/SGS/prevalenceData/CompPR%s.csv',
+  'data/prevalence/CompPR%s.csv',
   SUBTYPE
 )
 COMP_RT = sprintf(
-  '~/Dropbox/NGSPcnts/SGS/prevalenceData/CompRT%s.csv',
+  'data/prevalence/CompRT%s.csv',
   SUBTYPE
 )
 COMP_IN = sprintf(
-  '~/Dropbox/NGSPcnts/SGS/prevalenceData/CompIN%s.csv',
+  'data/prevalence/CompIN%s.csv',
   SUBTYPE
 )
 
@@ -90,6 +90,6 @@ for (gene in GENES) {
                                  "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "isAPOBEC")
                    ), target, row.names=FALSE)
 }
-pdf(sprintf('~/Dropbox/NGSPcnts/SGS/prevalenceData/%sCmp.pdf', SUBTYPE), width=8, height=24)
+pdf(sprintf('data/%sPrevalanceCmp.pdf', SUBTYPE), width=8, height=24)
 print(grid.arrange(grobs = plots, ncol = 1, nrow = 3))
 dev.off()
