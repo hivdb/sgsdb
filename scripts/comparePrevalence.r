@@ -20,6 +20,8 @@ SGS_PR=read.csv('data/prevalence/SGS.PRprevalence.csv')
 SGS_RT=read.csv('data/prevalence/SGS.RTprevalence.csv')
 SGS_IN=read.csv('data/prevalence/SGS.INprevalence.csv')
 
+CONSENSUS=read.csv('data/consensus.csv')
+
 COMP_PR = sprintf(
   'data/prevalence/CompPR%s.csv',
   SUBTYPE
@@ -46,11 +48,19 @@ for (gene in GENES) {
     RT = SGS_RT,
     IN = SGS_IN
   )
+  cons = switch(
+    gene,
+    PR = as.character(CONSENSUS[1,2]),
+    RT = as.character(CONSENSUS[2,2]),
+    IN = as.character(CONSENSUS[3,2])
+  )
   sgsData = sgsData[sgsData$Subtype == SHORT_SUBTYPE,]
   sgsData$sgsPcnt = sgsData$Pcnt
   dbData = DB_PREVALENCE_DATA[DB_PREVALENCE_DATA$gene == gene,]
   dbData$dbPcnt = dbData$percent * 100
   data = merge(sgsData, dbData, by.x=c("Pos", "AA"), by.y=c("position", "aa"))
+  data$Pos = as.numeric(as.character(data$Pos))
+  data$Cons = substring(cons, data$Pos, data$Pos)
   if (gene == "RT") {
     data = data[data$Pos < 241,]
   }
@@ -85,8 +95,9 @@ for (gene in GENES) {
     RT = COMP_RT,
     IN = COMP_IN
   )
-  out = data[data$sgsPcnt > 0 & data$dbPcnt < 60,]
-  write.csv(subset(out, select=c("Pos", "AA", "Count", "PosTotal", "PatientCount",
+  out = data[data$sgsPcnt > 0 & data$AA != data$Cons,]
+  # out = data[data$sgsPcnt > 0,]
+  write.csv(subset(out, select=c("Pos", "Cons", "AA", "Count", "PosTotal", "PatientCount",
                                  "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "isAPOBEC")
                    ), target, row.names=FALSE)
 }
