@@ -61,6 +61,8 @@ def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
             result[(pos, aa)] = 0
 
     for seqfact in seqsfact:
+        if seqfact['Source'] != 'Plasma':
+            continue
         accn = seqfact['Accession']
         seq = sequences[accn]
         seq_subtype = seq['subtypeText'].split(' (', 1)[0]

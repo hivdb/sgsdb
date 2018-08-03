@@ -60,6 +60,7 @@ def sequence_set_summary(sequences, sequence_reports):
     all_mixtures = Counter()
     pt_per_subtype_gene = defaultdict(set)
     seq_per_subtype_gene = Counter()
+    sequences = [s for s in sequences if s['Source'] == 'Plasma']
     for seq in sequences:
         n_mixtures = 0
         report = sequence_reports[seq['Accession']]
