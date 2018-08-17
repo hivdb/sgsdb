@@ -57,6 +57,13 @@ def retrieve_references(pubmed_ids):
     return references
 
 
+def list_subtypes(seqs):
+    subtypes = set()
+    for seq in seqs:
+        subtypes.add(seq['Subtype'])
+    return sorted(subtypes)
+
+
 def main():
     facttable, fasta, sierra_report, outputdir = sys.argv[1:]
     with open(facttable) as fp1, open(sierra_report) as fp2:
@@ -88,7 +95,8 @@ def main():
         result_sequences.append(seq)
     result_data = {
         'sequences': result_sequences,
-        'references': retrieve_references(pubmed_ids)
+        'references': retrieve_references(pubmed_ids),
+        'subtypes': list_subtypes(result_sequences),
     }
     factjson = os.path.join(outputdir, 'meta.json')
     with open(factjson, 'w') as outfp:
