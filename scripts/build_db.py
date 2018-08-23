@@ -44,16 +44,16 @@ def retrieve_references(pubmed_ids):
         }
     )
     data = resp.json()
-    references = {}
-    for uid in data['result']['uids']:
+    references = OrderedDict()
+    for uid in sorted(data['result']['uids']):
         ref = data['result'][uid]
-        references[uid] = {
+        references[uid] = OrderedDict({
             'MedlineID': uid,
             'PubYear': ref.get('pubdate', '').split(' ')[0],
             'firstAuthor': ref['authors'][0]['name'],
             'Title': ref['title'],
             'Journal': ref['source']
-        }
+        })
     return references
 
 
@@ -100,21 +100,22 @@ def main():
             gene = gene_seq['gene']['name']
             seq[gene] = 1
         result_sequences.append(seq)
-    result_data = {
+    result_data = OrderedDict({
         'sequences': result_sequences,
         'references': retrieve_references(pubmed_ids),
         'subtypes': list_subtypes(result_sequences),
         'sources': list_sources(result_sequences),
-    }
+    })
     factjson = os.path.join(outputdir, 'meta.json')
     with open(factjson, 'w') as outfp:
         json.dump(result_data, outfp)
 
-    for header, seq in fasta_reader(fasta):
-        accs = header.split('.', 1)[0]
-        single = os.path.join(outputdir, 'sequences', '{}.json'.format(accs))
-        with open(single, 'w') as outfas:
-            json.dump({'header': header, 'sequence': seq}, outfas)
+    # We don't need this anymore
+    # for header, seq in fasta_reader(fasta):
+    #     accs = header.split('.', 1)[0]
+    #     single = os.path.join(outputdir, 'sequences', '{}.json'.format(accs))
+    #     with open(single, 'w') as outfas:
+    #         json.dump({'header': header, 'sequence': seq}, outfas)
 
 
 if __name__ == '__main__':

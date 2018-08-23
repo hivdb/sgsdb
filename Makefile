@@ -4,10 +4,11 @@ fasta:
 
 sierra:
 	@sierrapy fasta -q scripts/query.gql -o local/SGS.sequences.json local/SGS.sequences.fas
+	@zip -j -FS data/SGS.sequences.json.zip local/SGS.sequences.json
 
 build:
 	@rm -rf data/upload
-	@mkdir -p data/upload/sequences
+	@mkdir -p data/upload
 	@python scripts/build_db.py data/SGS.sequences.fact.csv local/SGS.sequences.fas local/SGS.sequences.json data/upload
 
 stat:

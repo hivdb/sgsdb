@@ -1,17 +1,20 @@
 inputSequence {
     header
-},
-subtypeText,
+}
+subtypeText
 alignedGeneSequences {
-    firstAA, lastAA,
-    gene { name },
+    firstAA
+    lastAA
+    gene { name }
     mutations {
-        consensus,
-        position,
-        AAs,
-        text,
-        isInsertion,
-        isDeletion,
+        consensus
+        position
+        AAs
+        text
+        isInsertion
+        isDeletion
         isApobecDRM
-    },
+    }
+    alignedNAs
+    alignedAAs
 }
