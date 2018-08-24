@@ -101,7 +101,7 @@ def main():
         offset = \
             datetime.strptime(seq['CollectionDate'], '%Y-%m-%d') - DATE_1900
         offset = offset.days
-        weeks = (offset - min_days_offsets[pt]) // 7
+        weeks = int('{:.0f}'.format((offset - min_days_offsets[pt]) / 7))
         seq = OrderedDict(seq)
         pubmed_ids.add(seq['MedlineID'])
         accs = seq['Accession']
