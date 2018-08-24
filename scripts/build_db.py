@@ -9,10 +9,12 @@ import os
 import sys
 import csv
 import json
+from datetime import datetime
 
 import requests
 from collections import OrderedDict
 
+DATE_1900 = datetime.strptime('1900-01-01', '%Y-%m-%d')
 ESUMMARY_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi'
 
 
@@ -84,13 +86,29 @@ def main():
     }
     result_sequences = []
     pubmed_ids = set()
+
+    min_days_offsets = {}
     for seq in sequences:
+        pt = seq['PtIdentifier']
+        offset = \
+            datetime.strptime(seq['CollectionDate'], '%Y-%m-%d') - DATE_1900
+        offset = offset.days
+        min_days_offsets[pt] = \
+            min(min_days_offsets.get(pt, 0xffffffff), offset)
+
+    for seq in sequences:
+        pt = seq['PtIdentifier']
+        offset = \
+            datetime.strptime(seq['CollectionDate'], '%Y-%m-%d') - DATE_1900
+        offset = offset.days
+        weeks = (offset - min_days_offsets[pt]) // 7
         seq = OrderedDict(seq)
         pubmed_ids.add(seq['MedlineID'])
         accs = seq['Accession']
         seqreport = sequence_reports[accs]
         subtype = seqreport['subtypeText'].split(' (', 1)[0]
         seq.update({
+            'Weeks': weeks,
             'PR': 0,
             'RT': 0,
             'IN': 0,
