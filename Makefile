@@ -1,5 +1,5 @@
 fasta:
-	@rm local/SGS.sequences.fas
+	@rm local/SGS.sequences.fas 2>/dev/null || true
 	@scripts/download_fasta.sh
 
 sierra:
