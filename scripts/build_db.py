@@ -5,6 +5,7 @@ Build database files
 Please do not call this script directly, use `make build`
 """
 
+import re
 import os
 import sys
 import csv
@@ -16,6 +17,7 @@ from collections import OrderedDict
 
 DATE_1900 = datetime.strptime('1900-01-01', '%Y-%m-%d')
 ESUMMARY_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi'
+PATTERN_MIXTURES = re.compile(r'^[A-Z]{2,}$')
 
 
 def fasta_reader(filename):
@@ -112,11 +114,27 @@ def main():
             'PR': 0,
             'RT': 0,
             'IN': 0,
+            'NumPRMixtures': None,
+            'NumPRMutations': None,
+            'NumRTMixtures': None,
+            'NumRTMutations': None,
+            'NumINMixtures': None,
+            'NumINMutations': None,
+            'NumPRNAAmbiguities': None,
+            'NumRTNAAmbiguities': None,
+            'NumINNAAmbiguities': None,
             'Subtype': subtype,
         })
         for gene_seq in seqreport['alignedGeneSequences']:
             gene = gene_seq['gene']['name']
+            seq['Num{}Mixtures'.format(gene)] = len([
+                m for m in gene_seq['mutations']
+                if PATTERN_MIXTURES.match(m['AAs'])])
+            seq['Num{}Mutations'.format(gene)] = len(gene_seq['mutations'])
             seq[gene] = 1
+            seq['Num{}Ambiguities'.format(gene)] = len([
+                n for n in gene_seq['alignedNAs'].upper()
+                if n in 'WSMKRYBDHVN'])
         result_sequences.append(seq)
     result_data = OrderedDict({
         'sequences': result_sequences,
