@@ -1,4 +1,4 @@
-MedlineID,Accession,CollectionDate,Source,PtIdentifier,CometSubtype,Rx,Include
+MedlineID,Accession,CollectionDate,Source,PtIdentifier,CometSubtype,Rx,_Include
 11106537,AF299726,1998-11-07,PBMC,162-P1,B,ART,TRUE
 11106537,AF299727,1998-11-07,PBMC,162-P1,B,ART,TRUE
 11106537,AF299728,1998-11-07,PBMC,162-P1,B,ART,TRUE
