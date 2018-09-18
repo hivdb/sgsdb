@@ -132,7 +132,7 @@ def main():
                 if PATTERN_MIXTURES.match(m['AAs'])])
             seq['Num{}Mutations'.format(gene)] = len(gene_seq['mutations'])
             seq[gene] = 1
-            seq['Num{}Ambiguities'.format(gene)] = len([
+            seq['Num{}NAAmbiguities'.format(gene)] = len([
                 n for n in gene_seq['alignedNAs'].upper()
                 if n in 'WSMKRYBDHVN'])
         result_sequences.append(seq)
