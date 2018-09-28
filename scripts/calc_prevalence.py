@@ -2,24 +2,18 @@
 
 import os
 import csv
-import json
 
 from decimal import Decimal
 from collections import OrderedDict, Counter, defaultdict
 
-BASEDIR = os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))
-)
+from common import load_sequences, BASEDIR, PREC3
 
-FACTSHEET = os.path.join(BASEDIR, 'data', 'SGS.sequences.fact.csv')
-SIEERAREPORT = os.path.join(BASEDIR, 'local', 'SGS.sequences.json')
 OUTPUTS = {
     'PR': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.PRprevalence.csv'),
     'RT': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.RTprevalence.csv'),
     'IN': os.path.join(BASEDIR, 'data', 'prevalence', 'SGS.INprevalence.csv'),
 }
 
-PREC3 = Decimal('1.000')
 
 CONSENSUS = {
     'PR': (
@@ -47,7 +41,8 @@ CONSENSUS = {
 }
 
 
-def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
+def aggregate_aa_prevalence(gene, sequences,
+                            category, category_func):
     result = OrderedDict()
     total = Counter()
     totalpt = defaultdict(set)
@@ -60,13 +55,10 @@ def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
         for aa in all_aas:
             result[(pos, aa)] = 0
 
-    for seqfact in seqsfact:
-        if seqfact['Source'] != 'Plasma':
-            continue
-        accn = seqfact['Accession']
-        seq = sequences[accn]
+    for seqfact in sequences:
+        seq = seqfact['_Sierra']
         seq_subtype = seq['subtypeText'].split(' (', 1)[0]
-        if subtype is not None and subtype != seq_subtype:
+        if not category_func(seq_subtype, seqfact['Rx']):
             continue
         for gseq in seq['alignedGeneSequences']:
             if gseq['gene']['name'] == gene:
@@ -94,7 +86,7 @@ def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
             totalpt[pos].add(seqfact['PtIdentifier'])
     return OrderedDict(((pos, aa), {
         'Gene': gene,
-        'Subtype': subtype,
+        'Category': category,
         'Pos': pos,
         'AA': aa,
         'Pcnt': Decimal(count /
@@ -107,22 +99,22 @@ def aggregate_aa_prevalence(gene, seqsfact, sequences, subtype=None):
 
 
 def main():
-    major_subtypes = [None, 'B', 'C', 'D', 'A']
-    header = ['Gene', 'Subtype', 'Pos', 'AA', 'Pcnt', 'Count',
+    categories = {
+        'All': lambda s, rx: True,
+        'SubtypeB': lambda s, rx: s == 'B',
+        'SubtypeC': lambda s, rx: s == 'C',
+        'Non-SubtypeBC': lambda s, rx: s not in ('B', 'C'),
+        'ART': lambda s, rx: rx == 'ART',
+        'Naive': lambda s, rx: rx == 'None'
+    }
+    header = ['Gene', 'Category', 'Pos', 'AA', 'Pcnt', 'Count',
               'PosTotal', 'PatientCount', 'PatientPosTotal']
-    with open(FACTSHEET) as fp:
-        if fp.read(1) != '\ufeff':
-            fp.seek(0)
-        seqsfact = list(csv.DictReader(fp))
-    with open(SIEERAREPORT) as fp:
-        sequences = json.load(fp)
-        sequences = {s['inputSequence']['header'].split('.', 1)[0]: s
-                     for s in sequences}
+    sequences = load_sequences()
     for gene in ('PR', 'RT', 'IN'):
         all_prevalence = []
-        for subtype in major_subtypes:
+        for cat, func in categories.items():
             prevs = aggregate_aa_prevalence(
-                gene, seqsfact, sequences, subtype).values()
+                gene, sequences, cat, func).values()
             all_prevalence.extend(prevs)
         with open(OUTPUTS[gene], 'w') as fp:
             writer = csv.DictWriter(fp, header)

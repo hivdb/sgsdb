@@ -13,6 +13,9 @@ build:
 
 stat:
 	@mkdir -p data/prevalence
-	@python scripts/summarize_studies.py
 	@python scripts/calc_prevalence.py
 	@Rscript scripts/comparePrevalence.r
+	@python scripts/make_report.py
+
+permutation:
+	@scripts/permutation_test.sh 1000
