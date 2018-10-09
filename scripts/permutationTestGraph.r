@@ -60,57 +60,57 @@ APM_PT = list(PR = 0.0415, RT = 0.0439, IN = 0.0562)
 
 plot_nmut = function(gene) {
   plot = ggplot(data) +
-    geom_histogram(aes(x = X..Mutations), binwidth=1) +
+    geom_histogram(aes(x = X..Mutations), bins=60) +
     geom_vline(aes(xintercept = NMUT[[gene]]), color = "red", linetype = "dashed") +
     geom_vline(aes(xintercept = NMUT_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     geom_vline(aes(xintercept = NMUT_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = sprintf("%s test count", gene),
-      limits = c(0, 75)
+      name = sprintf("%s test count", gene)
+      # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = if (gene == "IN") "# Mutations" else NULL,
-      labels = if (gene == "IN") waiver() else NULL,
-      limits = c(150, 850)
+      name = if (gene == "IN") "# Mutations" else NULL
+      # labels = if (gene == "IN") waiver() else NULL,
+      # limits = c(150, 850)
     );
   plot;
 }
 
 plot_nuum = function(gene) {
   plot = ggplot(data) +
-    geom_histogram(aes(x = X..Unusual.Mutations), binwidth=1) +
+    geom_histogram(aes(x = X..Unusual.Mutations), bins=60) +
     geom_vline(aes(xintercept = NUUM[[gene]]), color = "red", linetype = "dashed") +
     geom_vline(aes(xintercept = NUUM_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     geom_vline(aes(xintercept = NUUM_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = NULL,
-      labels = NULL,
-      limits = c(0, 75)
+      name = NULL
+      # labels = NULL,
+      # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = if (gene == "IN") "# Unusual Mutations" else NULL,
-      labels = if (gene == "IN") waiver() else NULL,
-      limits = c(0, 250)
+      name = if (gene == "IN") "# Unusual Mutations" else NULL
+      # labels = if (gene == "IN") waiver() else NULL,
+      # limits = c(0, 250)
     );
   plot;
 }
 
 plot_puum = function(gene) {
   plot = ggplot(data) +
-    geom_histogram(aes(x = X..Unusual.Mutations.1), binwidth=0.001) +
+    geom_histogram(aes(x = X..Unusual.Mutations.1), bins=60) +
     geom_vline(aes(xintercept = PUUM[[gene]]), color = "red", linetype = "dashed") +
     geom_vline(aes(xintercept = PUUM_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     geom_vline(aes(xintercept = PUUM_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = NULL,
-      labels = NULL,
-      limits = c(0, 75)
+      name = NULL
+      # labels = NULL,
+      # limits = c(0, 75)
     ) +
     scale_x_continuous(
       name = if (gene == "IN") "% Unusual Mutations" else NULL,
-      #labels = scales::percent,
-      labels = if (gene == "IN") scales::percent else NULL,
-      limits = c(0, 0.3)
+      labels = scales::percent
+      # labels = if (gene == "IN") scales::percent else NULL,
+      # limits = c(0, 0.3)
     );
   plot;
 }
@@ -118,12 +118,12 @@ plot_puum = function(gene) {
 plots = list();
 
 for (gene in GENES) {
-  filename = sprintf("local/permut.%s.1000.txt", gene);
+  filename = sprintf("local/permut.new/permut.%s.1000.u.txt", gene);
   data = read.table(filename, header=TRUE, sep="\t", comment.char="");
   uum = UUM[[gene]] + 0.01;
   plots = append(plots, list(plot_nmut(gene), plot_nuum(gene), plot_puum(gene)));
 }
-pdf(sprintf('data/PermutationTestGraph.pdf', cat), width=8, height=6);
+pdf(sprintf('data/PermutationTestGraphUniqMuts.pdf', cat), width=8, height=6);
 print(grid.arrange(grobs = plots, ncol = 3, nrow = 3));
 dev.off();
 

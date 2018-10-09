@@ -7,8 +7,6 @@ import json
 import random
 from hivdbql import app
 
-from collections import Counter
-
 from common import unusual_mutation_map, apobec_mutation_map
 
 db = app.db
@@ -139,19 +137,19 @@ def get_single_isolates(patients, gene):
 
 
 def count_unusual_mutations(gene, muts):
-    uum = set()
+    uum = 0
     for pos, aa in muts:
         if (gene, pos, aa) in UUM:
-            uum.add((gene, pos, aa))
-    return len(uum)
+            uum += 1
+    return uum
 
 
 def count_apobec_mutations(gene, muts):
-    apm = set()
+    apm = 0
     for pos, aa in muts:
         if (gene, pos, aa) in APM:
-            apm.add((gene, pos, aa))
-    return len(apm)
+            apm += 1
+    return apm
 
 
 def parse_mutations(muts):
@@ -168,7 +166,7 @@ def parse_mutations(muts):
 
 
 def count_mutations(isolates):
-    total = Counter()
+    total = []
     for iso in isolates:
         for seq in iso.sequences:
             muts = seq.sierra_mutations
@@ -176,10 +174,10 @@ def count_mutations(isolates):
             if iso.gene == 'RT':
                 muts = [(p, a) for p, a in muts if p <= 240]
             for mut in muts:
-                total[mut] += 1
-    num_muts = len(total.keys())
-    num_uums = count_unusual_mutations(iso.gene, total.keys())
-    num_apms = count_apobec_mutations(iso.gene, total.keys())
+                total.append(mut)
+    num_muts = len(total)
+    num_uums = count_unusual_mutations(iso.gene, total)
+    num_apms = count_apobec_mutations(iso.gene, total)
 
     return (
         num_muts, num_uums, num_uums / num_muts,

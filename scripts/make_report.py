@@ -87,8 +87,47 @@ def get_subtype(seq):
         return 'Other'
 
 
-def prevalence_stat(gene, cat):
+def prevalence_stat(gene, cat, ptcount):
     mutations = load_aggregated_mutations(gene, cat)
+    ptmuttotal = sum(m['PatientCount'] for m in mutations) / ptcount
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}'.format(gene, cat),
+        ptmuttotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, '
+        'IsUnusual, NotAPOBEC'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if
+            not m['isUsual'] and not m['isAPOBEC']) / ptcount,
+        total=ptmuttotal)
+    ptseqtotal = sum(m['PatientCount'] for m in mutations
+                     if m['Count'] > 1) / ptcount
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumSequences>1'.format(gene, cat),
+        ptseqtotal, total=ptmuttotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumSequences>1, '
+        'IsUnusual, NotAPOBEC'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if m['Count'] > 1
+            and not m['isUsual'] and not m['isAPOBEC']) / ptcount,
+        total=ptseqtotal)
+    ptpttotal = sum(m['PatientCount'] for m in mutations
+                    if m['PatientCount'] > 1) / ptcount
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumPatients>1'.format(gene, cat),
+        ptpttotal, total=ptmuttotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumPatients>1, '
+        'IsUnusual, NotAPOBEC'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
+            and not m['isUsual'] and not m['isAPOBEC']) / ptcount,
+        total=ptpttotal)
+
     muttotal = len(mutations)
     yield make_row(
         '# Uniq. Mutations',
@@ -264,10 +303,19 @@ def main():
     with open(REPORT_PATH, 'w') as fp:
         writer = csv.DictWriter(fp, header)
         writer.writeheader()
-        writer.writerows(basic_stat(sequences))
+        ptcount = {}
+        for row in basic_stat(sequences):
+            writer.writerow(row)
+            if row['name'] == '# Patients':
+                if row['subset'] == 'Gene=PR':
+                    ptcount['PR'] = row['value']
+                elif row['subset'] == 'Gene=RT':
+                    ptcount['RT'] = row['value']
+                elif row['subset'] == 'Gene=IN':
+                    ptcount['IN'] = row['value']
         for cat in CATEGORIES:
             for gene in GENES:
-                writer.writerows(prevalence_stat(gene, cat))
+                writer.writerows(prevalence_stat(gene, cat, ptcount[gene]))
         writer.writerows(overall_prevalence_stat())
 
 
