@@ -226,7 +226,8 @@ def basic_stat(sequences):
         ptid = seq['PtIdentifier']
         pttp = (ptid, seq['CollectionDate'])
         ptids.add(ptid)
-        rxptids[seq['Rx']].add(ptid)
+        rx = seq['Rx']
+        rxptids[rx].add(ptid)
         pttps[ptid].add(pttp)
         pttpseqs[pttp] += 1
         subtype = get_subtype(sierra)
@@ -236,6 +237,8 @@ def basic_stat(sequences):
             gene = geneseq['gene']['name']
             geneseqs[gene] += 1
             geneptids[gene].add(ptid)
+            subtypeptids[(subtype, gene)].add(ptid)
+            rxptids[(rx, gene)].add(ptid)
             genepttps[gene].add(pttp)
             for (subset, func) in GENE_RANGES[gene]:
                 if func(geneseq['firstAA'], geneseq['lastAA']):
@@ -272,11 +275,21 @@ def basic_stat(sequences):
                        'Subtype={}'.format(subtype),
                        len(subtypeptids[subtype]),
                        total=totalpts)
+        for gene in GENES:
+            yield make_row('# Patients',
+                           'Subtype={}, Gene={}'.format(subtype, gene),
+                           len(subtypeptids[(subtype, gene)]),
+                           total=totalpts)
     for rx in TREATMENTS:
         yield make_row('# Patients',
                        'Rx={}'.format(rx),
                        len(rxptids[rx]),
                        total=totalpts)
+        for gene in GENES:
+            yield make_row('# Patients',
+                           'Rx={}, Gene={}'.format(rx, gene),
+                           len(rxptids[(rx, gene)]),
+                           total=totalpts)
     yield make_row('# Patients', 'NumSample=1',
                    len([k for k, v in pttps.items() if len(v) == 1]),
                    total=totalpts)

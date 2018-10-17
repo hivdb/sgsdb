@@ -67,11 +67,11 @@ plot_nmut = function(gene) {
     geom_vline(aes(xintercept = NMUT_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     # geom_vline(aes(xintercept = NMUT_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = sprintf("%s test count", gene)
+      name = "# Mutations"
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = "# Mutations"
+      name = NULL
       # labels = if (gene == "IN") waiver() else NULL,
       # limits = c(150, 850)
     );
@@ -85,12 +85,12 @@ plot_nuum = function(gene) {
     geom_vline(aes(xintercept = NUUM_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     # geom_vline(aes(xintercept = NUUM_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = NULL
+      name = "# Unusual Mutations"
       # labels = NULL,
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = "# Unusual Mutations"
+      name = NULL
       # labels = if (gene == "IN") waiver() else NULL,
       # limits = c(0, 250)
     );
@@ -104,12 +104,12 @@ plot_puum = function(gene) {
     geom_vline(aes(xintercept = PUUM_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     # geom_vline(aes(xintercept = PUUM_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = NULL
+      name = "% Unusual Mutations"
       # labels = NULL,
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = "% Unusual Mutations",
+      name = NULL,
       labels = scales::percent
       # labels = if (gene == "IN") scales::percent else NULL,
       # limits = c(0, 0.3)
@@ -121,8 +121,8 @@ for (gene in GENES) {
   filename = sprintf("local/permut.new/permut.%s.1000.o.txt", gene);
   data = read.table(filename, header=TRUE, sep="\t", comment.char="");
   plots = list(plot_nmut(gene), plot_nuum(gene), plot_puum(gene));
-  pdf(sprintf('data/PermutationTestGraphOrdinaryMuts%s.pdf', gene), width=8, height=2);
-  print(grid.arrange(grobs = plots, ncol = 3, nrow = 1));
+  pdf(sprintf('data/PermutationTestGraphOrdinaryMutsVertical%s.pdf', gene), width=8/3, height=6);
+  print(grid.arrange(grobs = plots, ncol = 1, nrow = 3));
   dev.off();
 }
 

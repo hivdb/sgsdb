@@ -67,7 +67,7 @@ plot_nmut = function(gene) {
     geom_vline(aes(xintercept = NMUT_SEQ[[gene]]), color = "blue", linetype = "dashed") +
     # geom_vline(aes(xintercept = NMUT_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
-      name = sprintf("%s test count", gene)
+      name = NULL
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
@@ -121,8 +121,8 @@ for (gene in GENES) {
   filename = sprintf("local/permut.new/permut.%s.1000.o.txt", gene);
   data = read.table(filename, header=TRUE, sep="\t", comment.char="");
   plots = list(plot_nmut(gene), plot_nuum(gene), plot_puum(gene));
-  pdf(sprintf('data/PermutationTestGraphOrdinaryMuts%s.pdf', gene), width=8, height=2);
-  print(grid.arrange(grobs = plots, ncol = 3, nrow = 1));
+  pdf(sprintf('data/PermutationTestGraphOrdinaryMuts2x2%s.pdf', gene), width=8/3*2, height=4);
+  print(grid.arrange(grobs = plots, ncol = 2, nrow = 2));
   dev.off();
 }
 

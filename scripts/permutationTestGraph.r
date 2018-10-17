@@ -69,7 +69,8 @@ plot_nmut = function(gene) {
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = if (gene == "IN") "# Mutations" else NULL
+      # name = if (gene == "IN") "# Mutations" else NULL
+      name = "# Mutations"
       # labels = if (gene == "IN") waiver() else NULL,
       # limits = c(150, 850)
     );
@@ -88,7 +89,8 @@ plot_nuum = function(gene) {
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = if (gene == "IN") "# Unusual Mutations" else NULL
+      # name = if (gene == "IN") "# Unusual Mutations" else NULL
+      name = "# Unusual Mutations"
       # labels = if (gene == "IN") waiver() else NULL,
       # limits = c(0, 250)
     );
@@ -107,7 +109,8 @@ plot_puum = function(gene) {
       # limits = c(0, 75)
     ) +
     scale_x_continuous(
-      name = if (gene == "IN") "% Unusual Mutations" else NULL,
+      # name = if (gene == "IN") "% Unusual Mutations" else NULL,
+      name = "% Unusual Mutations",
       labels = scales::percent
       # labels = if (gene == "IN") scales::percent else NULL,
       # limits = c(0, 0.3)
@@ -115,17 +118,18 @@ plot_puum = function(gene) {
   plot;
 }
 
-plots = list();
-
 for (gene in GENES) {
-  filename = sprintf("local/permut.new/permut.%s.1000.u.txt", gene);
+  filename = sprintf("local/permut.new/permut.%s.1000.o.txt", gene);
   data = read.table(filename, header=TRUE, sep="\t", comment.char="");
   uum = UUM[[gene]] + 0.01;
-  plots = append(plots, list(plot_nmut(gene), plot_nuum(gene), plot_puum(gene)));
+  plots = list(plot_nmut(gene), plot_nuum(gene), plot_puum(gene));
+  pdf(sprintf('data/PermutationTestGraphUniqMuts.pdf', cat), width=8, height=6);
+  print(grid.arrange(grobs = plots, ncol = 3, nrow = 3));
+  dev.off();
 }
-pdf(sprintf('data/PermutationTestGraphUniqMuts.pdf', cat), width=8, height=6);
-print(grid.arrange(grobs = plots, ncol = 3, nrow = 3));
-dev.off();
+# pdf(sprintf('data/PermutationTestGraphUniqMuts.pdf', cat), width=8, height=6);
+# print(grid.arrange(grobs = plots, ncol = 3, nrow = 3));
+# dev.off();
 
 
 
