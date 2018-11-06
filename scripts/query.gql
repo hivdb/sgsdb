@@ -10,6 +10,7 @@ alignedGeneSequences {
         consensus
         position
         AAs
+        triplet
         text
         isInsertion
         isDeletion

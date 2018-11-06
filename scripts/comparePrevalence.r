@@ -79,7 +79,7 @@ for (cat in CATEGORIES) {
     )
     out = data[data$sgsPcnt > 0 & data$AA != data$Cons,]
     # out = data[data$sgsPcnt > 0,]
-    write.csv(subset(out, select=c("Pos", "Cons", "AA", "Count", "PosTotal", "PatientCount",
+    write.csv(subset(out, select=c("Pos", "Cons", "AA", "NACons", "Codons", "Count", "PosTotal", "PatientCount",
                                    "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "isAPOBEC", "isUsual")
                      ), target, row.names=FALSE)
   }
