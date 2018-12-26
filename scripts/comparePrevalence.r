@@ -9,6 +9,8 @@ SGS_PR=read.csv('data/prevalence/SGS.PRprevalence.csv')
 SGS_RT=read.csv('data/prevalence/SGS.RTprevalence.csv')
 SGS_IN=read.csv('data/prevalence/SGS.INprevalence.csv')
 
+APOBECS=read.csv('data/prevalence/LUAPOBEC.csv')
+
 CONSENSUS=read.csv('data/consensus.csv')
 
 GENES = c('PR', 'RT', 'IN')
@@ -40,7 +42,7 @@ for (cat in CATEGORIES) {
     sgsData$sgsPcnt = sgsData$Pcnt
     dbData = DB_PREVALENCE_DATA[DB_PREVALENCE_DATA$gene == gene,]
     dbData$dbPcnt = dbData$percent * 100
-    data = merge(sgsData, dbData, by.x=c("Pos", "AA"), by.y=c("position", "aa"))
+    data = merge(sgsData, dbData, by.x=c("Pos", "AA"), by.y=c("position", "aa"), all.x=TRUE)
     data$Pos = as.numeric(as.character(data$Pos))
     data$Cons = substring(cons, data$Pos, data$Pos)
     if (gene == "RT") {
@@ -79,8 +81,9 @@ for (cat in CATEGORIES) {
     )
     out = data[data$sgsPcnt > 0 & data$AA != data$Cons,]
     # out = data[data$sgsPcnt > 0,]
-    write.csv(subset(out, select=c("Pos", "Cons", "AA", "NACons", "Codons", "Count", "PosTotal", "PatientCount",
-                                   "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "isAPOBEC", "isUsual")
+    write.csv(subset(out, select=c("Pos", "Cons", "AA", "FromCodons", "ToCodons",
+                                   "FromCodonsCtx", "ToCodonsCtx", "Count", "PosTotal", "PatientCount",
+                                   "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "IsAPOBEC", "isUsual")
                      ), target, row.names=FALSE)
   }
   pdf(sprintf('data/%sPrevalanceCmp.pdf', cat), width=8, height=24)

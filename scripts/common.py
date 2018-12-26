@@ -66,12 +66,18 @@ def load_aggregated_mutations(gene, subset='All'):
     with open(AGG_MUTATIONS[gene].format(subset)) as fp:
         result = []
         for row in csv.DictReader(fp):
+            row['excluded'] = False
+            if row['AA'] in ('-', '_', '*', 'X'):
+                row['excluded'] = True
+            if row['dbPcnt'] == 'NA':
+                row['dbPcnt'] = .0
+                row['pcntFold'] = 0xffff
             for k in ('Pos', 'Count', 'PosTotal',
                       'PatientCount', 'PatientPosTotal'):
                 row[k] = int(row[k])
             for k in ('sgsPcnt', 'dbPcnt', 'pcntFold'):
                 row[k] = float(row[k])
-            for k in ('isAPOBEC', 'isUsual'):
-                row[k] = row[k] == 'True'
+            for k in ('IsAPOBEC', 'isUsual'):
+                row[k] = row[k].upper() == 'TRUE'
             result.append(row)
         return result
