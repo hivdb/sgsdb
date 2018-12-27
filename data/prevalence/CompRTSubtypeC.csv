@@ -1,6 +1,4 @@
 "Pos","Cons","AA","FromCodons","ToCodons","FromCodonsCtx","ToCodonsCtx","Count","PosTotal","PatientCount","PatientPosTotal","sgsPcnt","dbPcnt","pcntFold","IsAPOBEC","isUsual"
-3,"S","N","AGT (53)","AAT","ATTAGTCCC (53)","ATTAATCCC",1,2120,1,107,0.047,0,Inf,"False","False"
-3,"S","X","AGT (29)","RGT","ATTAGTCCC (29)","ATTRGTCCC",1,2120,1,107,0.047,NA,NA,"False",NA
 4,"P","H","CCT (107)","CAC (4), CAT (1)","AGTCCTATT (107)","AGTCACATT (4), AGTCATATT (1)",5,2120,2,107,0.236,0.314692529921585,0.749938360655738,"False","True"
 4,"P","S","CCC (30)","TCC (88)","AGTCCCATT (29), AGTCCCACT (1)","AGTTCCATT (70), AGCTCCATT (16), AGTTCCATA (2)",88,2120,8,107,4.151,4.21997523730912,0.983655061124694,"False","True"
 4,"P","T","","ACC","","AGTACCATT",1,2120,1,107,0.047,0.722245150639703,0.0650748571428571,"False","True"
