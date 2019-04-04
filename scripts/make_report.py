@@ -17,14 +17,14 @@ TREATMENTS = ('ART', 'None', 'Unknown')
 CATEGORIES = ('All', 'SubtypeB', 'SubtypeC', 'Non-SubtypeBC', 'Naive', 'ART')
 GENE_RANGES = {
     'PR': [
-        ('FirstAA=1, LastAA=99', lambda f, l: f == 1 and l == 99),
+        ('FirstAA=1, LastAA=99', lambda fa, la: fa == 1 and la == 99),
     ],
     'RT': [
-        ('FirstAA=1, LastAA>=240', lambda f, l: f == 1 and l >= 240),
-        ('FirstAA=1, LastAA=560', lambda f, l: f == 1 and l >= 560),
+        ('FirstAA=1, LastAA>=240', lambda fa, la: fa == 1 and la >= 240),
+        ('FirstAA=1, LastAA=560', lambda fa, la: fa == 1 and la >= 560),
     ],
     'IN': [
-        ('FirstAA=1, LastAA=288', lambda f, l: f == 1 and l == 288),
+        ('FirstAA=1, LastAA=288', lambda fa, la: fa == 1 and la == 288),
     ],
 }
 SUBTYPES = ('B', 'C', 'Other')
@@ -32,7 +32,7 @@ APM = apobec_mutation_map()
 
 header = ['name', 'subset', 'value', 'percent',
           'range_0', 'range_100', 'r_squared',
-          'p_value', 'stderr']
+          'p_value', 'stderr', 'note']
 
 
 def make_row(name, subset, value, **kws):
@@ -53,13 +53,14 @@ def make_row(name, subset, value, **kws):
 
 def make_percentile_row(name, subset, arr):
     arr = list(arr)
-    p0, median, p100 = percentile(arr, (0, 50, 100))
+    p0, p25, median, p75, p100 = percentile(arr, (0, 25, 50, 75, 100))
     kws = {
         'name': name,
         'subset': subset,
         'value': median,
         'range_0': p0,
         'range_100': p100,
+        'note': 'IQR: {} - {}'.format(p25, p75)
     }
     return make_row(**kws)
 
@@ -100,7 +101,15 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         sum(m['PatientCount'] for m in mutations if
-            not m['isUsual'] and not m['IsAPOBEC'] and
+            m['isUnusual'] and not m['IsAPOBEC'] and
+            not m['excluded']) / ptcount,
+        total=ptmuttotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, '
+        'IsUnusual'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if
+            m['isUnusual'] and
             not m['excluded']) / ptcount,
         total=ptmuttotal)
     ptseqtotal = sum(m['PatientCount'] for m in mutations
@@ -114,7 +123,15 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, NumSequences>1, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         sum(m['PatientCount'] for m in mutations if m['Count'] > 1
-            and not m['isUsual'] and not m['IsAPOBEC'] and
+            and m['isUnusual'] and not m['IsAPOBEC'] and
+            not m['excluded']) / ptcount,
+        total=ptseqtotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumSequences>1, '
+        'IsUnusual'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if m['Count'] > 1
+            and m['isUnusual'] and
             not m['excluded']) / ptcount,
         total=ptseqtotal)
     ptpttotal = sum(m['PatientCount'] for m in mutations
@@ -128,7 +145,15 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, NumPatients>1, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
-            and not m['isUsual'] and not m['IsAPOBEC'] and
+            and m['isUnusual'] and not m['IsAPOBEC'] and
+            not m['excluded']) / ptcount,
+        total=ptpttotal)
+    yield make_row(
+        '# Mutations per Patient',
+        'Gene={}, Category={}, NumPatients>1, '
+        'IsUnusual'.format(gene, cat),
+        sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
+            and m['isUnusual'] and
             not m['excluded']) / ptcount,
         total=ptpttotal)
     yield make_row(
@@ -154,7 +179,14 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         len([m for m in mutations if
-             not m['isUsual'] and not m['IsAPOBEC'] and not m['excluded']]),
+             m['isUnusual'] and not m['IsAPOBEC'] and not m['excluded']]),
+        total=muttotal)
+    yield make_row(
+        '# Uniq. Mutations',
+        'Gene={}, Category={}, '
+        'IsUnusual'.format(gene, cat),
+        len([m for m in mutations if
+             m['isUnusual'] and not m['excluded']]),
         total=muttotal)
     yield make_row(
         '# Uniq. Mutations',
@@ -172,7 +204,14 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, NumSequences>1, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         len([m for m in mutations if m['Count'] > 1
-            and not m['isUsual'] and not m['IsAPOBEC'] and not m['excluded']]),
+            and m['isUnusual'] and not m['IsAPOBEC'] and not m['excluded']]),
+        total=seqtotal)
+    yield make_row(
+        '# Uniq. Mutations',
+        'Gene={}, Category={}, NumSequences>1, '
+        'IsUnusual'.format(gene, cat),
+        len([m for m in mutations if m['Count'] > 1
+            and m['isUnusual'] and not m['excluded']]),
         total=seqtotal)
     yield make_row(
         '# Uniq. Mutations',
@@ -190,8 +229,15 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, NumPatients>1, '
         'IsUnusual, NotAPOBEC'.format(gene, cat),
         len([m for m in mutations if m['PatientCount'] > 1
-             and not m['isUsual'] and not m['IsAPOBEC']
+             and m['isUnusual'] and not m['IsAPOBEC']
              and not m['excluded']]),
+        total=pttotal)
+    yield make_row(
+        '# Uniq. Mutations',
+        'Gene={}, Category={}, NumPatients>1, '
+        'IsUnusual'.format(gene, cat),
+        len([m for m in mutations if m['PatientCount'] > 1
+             and m['isUnusual'] and not m['excluded']]),
         total=pttotal)
     yield make_row(
         '# Uniq. Mutations',

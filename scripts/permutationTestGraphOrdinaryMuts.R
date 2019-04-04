@@ -25,35 +25,35 @@ NMUT_SEQ = list(
 # )
 
 NUUM = list(
-  PR = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, IsUnusual, NotAPOBEC",]$value),
-  RT = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, IsUnusual, NotAPOBEC",]$value),
-  IN = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, IsUnusual, NotAPOBEC",]$value)
+  PR = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, IsUnusual",]$value),
+  RT = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, IsUnusual",]$value),
+  IN = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, IsUnusual",]$value)
 )
 NUUM_SEQ = list(
-  PR = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$value),
-  RT = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$value),
-  IN = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$value)
+  PR = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumSequences>1, IsUnusual",]$value),
+  RT = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumSequences>1, IsUnusual",]$value),
+  IN = as.double(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumSequences>1, IsUnusual",]$value)
 )
 # NUUM_PT = list(
-#   PR = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$value),
-#   RT = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$value),
-#   IN = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$value)
+#   PR = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumPatients>1, IsUnusual",]$value),
+#   RT = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumPatients>1, IsUnusual",]$value),
+#   IN = as.integer(PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumPatients>1, IsUnusual",]$value)
 # )
 
 PUUM = list(
-  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, IsUnusual, NotAPOBEC",]$percent))/100,
-  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, IsUnusual, NotAPOBEC",]$percent))/100,
-  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, IsUnusual, NotAPOBEC",]$percent))/100
+  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, IsUnusual",]$percent))/100,
+  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, IsUnusual",]$percent))/100,
+  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, IsUnusual",]$percent))/100
 )
 PUUM_SEQ = list(
-  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$percent))/100,
-  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$percent))/100,
-  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumSequences>1, IsUnusual, NotAPOBEC",]$percent))/100
+  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumSequences>1, IsUnusual",]$percent))/100,
+  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumSequences>1, IsUnusual",]$percent))/100,
+  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumSequences>1, IsUnusual",]$percent))/100
 )
 PUUM_PT = list(
-  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$percent))/100,
-  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$percent))/100,
-  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumPatients>1, IsUnusual, NotAPOBEC",]$percent))/100
+  PR = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=PR, Category=All, NumPatients>1, IsUnusual",]$percent))/100,
+  RT = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=RT, Category=All, NumPatients>1, IsUnusual",]$percent))/100,
+  IN = as.double(sub("%", "", PROFILE_DATA[PROFILE_DATA$name == "# Mutations per Patient" & PROFILE_DATA$subset == "Gene=IN, Category=All, NumPatients>1, IsUnusual",]$percent))/100
 )
 
 APM = list(PR = 0.0554, RT = 0.0307, IN = 0.0621)
@@ -102,6 +102,7 @@ plot_puum = function(gene) {
     geom_histogram(aes(x = X..Unusual.Mutations.1), bins=60) +
     geom_vline(aes(xintercept = PUUM[[gene]]), color = "red", linetype = "dashed") +
     geom_vline(aes(xintercept = PUUM_SEQ[[gene]]), color = "blue", linetype = "dashed") +
+    annotate("text", x=PUUM_SEQ[[gene]] + 0.001, y=60, size=3, hjust=0, color="blue", label = scales::percent_format(accuracy=0.1)(PUUM_SEQ[[gene]])) +
     # geom_vline(aes(xintercept = PUUM_PT[[gene]]), color = "green", linetype = "dashed") +
     scale_y_continuous(
       name = NULL
@@ -110,7 +111,7 @@ plot_puum = function(gene) {
     ) +
     scale_x_continuous(
       name = "% Unusual Mutations",
-      labels = scales::percent
+      labels = scales::percent_format(accuracy = 1)
       # labels = if (gene == "IN") scales::percent else NULL,
       # limits = c(0, 0.3)
     );

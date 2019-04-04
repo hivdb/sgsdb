@@ -29,7 +29,7 @@ def unusual_mutation_map():
     with open(DB_AA_VARIANTS_TABLE) as fp:
         data = csv.DictReader(fp)
         for row in data:
-            if row['isUsual'] == 'True':
+            if row['isUnusual'] == 'False':
                 continue
             uum.add((row['gene'], int(row['position']), row['aa']))
     return uum
@@ -77,7 +77,7 @@ def load_aggregated_mutations(gene, subset='All'):
                 row[k] = int(row[k])
             for k in ('sgsPcnt', 'dbPcnt', 'pcntFold'):
                 row[k] = float(row[k])
-            for k in ('IsAPOBEC', 'isUsual'):
+            for k in ('IsAPOBEC', 'isUnusual'):
                 row[k] = row[k].upper() == 'TRUE'
             result.append(row)
         return result

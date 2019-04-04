@@ -83,7 +83,7 @@ for (cat in CATEGORIES) {
     # out = data[data$sgsPcnt > 0,]
     write.csv(subset(out, select=c("Pos", "Cons", "AA", "FromCodons", "ToCodons",
                                    "FromCodonsCtx", "ToCodonsCtx", "Count", "PosTotal", "PatientCount",
-                                   "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "IsAPOBEC", "isUsual")
+                                   "PatientPosTotal", "sgsPcnt", "dbPcnt", "pcntFold", "IsAPOBEC", "isUnusual")
                      ), target, row.names=FALSE)
   }
   pdf(sprintf('data/%sPrevalanceCmp.pdf', cat), width=8, height=24)

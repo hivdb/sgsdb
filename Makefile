@@ -18,4 +18,8 @@ stat:
 	@python scripts/make_report.py
 
 permutation:
+	@python scripts/make_permutation_profile.py
 	@scripts/permutation_test.sh 1000
+
+permutation_fig:
+	@Rscript scripts/permutationTestGraphOrdinaryMuts.R
