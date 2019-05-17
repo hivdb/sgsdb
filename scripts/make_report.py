@@ -6,7 +6,7 @@ from decimal import Decimal
 from collections import Counter, defaultdict
 
 from numpy import percentile
-from scipy.stats import linregress
+from scipy.stats import linregress, chi2_contingency
 
 from common import (load_sequences, load_aggregated_mutations,
                     apobec_mutation_map, BASEDIR, PREC3)
@@ -54,13 +54,14 @@ def make_row(name, subset, value, **kws):
 def make_percentile_row(name, subset, arr):
     arr = list(arr)
     p0, p25, median, p75, p100 = percentile(arr, (0, 25, 50, 75, 100))
+    mean = sum(arr) / len(arr)
     kws = {
         'name': name,
         'subset': subset,
         'value': median,
         'range_0': p0,
         'range_100': p100,
-        'note': 'IQR: {} - {}'.format(p25, p75)
+        'note': 'IQR: {} - {}; Mean: {}'.format(p25, p75, mean)
     }
     return make_row(**kws)
 
@@ -88,99 +89,96 @@ def get_subtype(seq):
         return 'Other'
 
 
-def prevalence_stat(gene, cat, ptcount):
+def prevalence_stat(gene, cat, splcount):
     mutations = load_aggregated_mutations(gene, cat)
-    ptmuttotal = sum(m['PatientCount'] for m in mutations
-                     if not m['excluded']) / ptcount
+    splmuttotal = sum(m['SampleCount'] for m in mutations
+                      if not m['excluded'])
     yield make_row(
-        '# Mutations per Patient',
+        '# Mutations per Sample',
         'Gene={}, Category={}'.format(gene, cat),
-        ptmuttotal)
+        splmuttotal / splcount)
+    spluumtotal = sum(m['SampleCount'] for m in mutations if
+                      m['isUnusual'] and not m['excluded'])
     yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if
-            m['isUnusual'] and not m['IsAPOBEC'] and
-            not m['excluded']) / ptcount,
-        total=ptmuttotal)
-    yield make_row(
-        '# Mutations per Patient',
+        '# Mutations per Sample',
         'Gene={}, Category={}, '
         'IsUnusual'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if
-            m['isUnusual'] and
-            not m['excluded']) / ptcount,
-        total=ptmuttotal)
-    ptseqtotal = sum(m['PatientCount'] for m in mutations
-                     if m['Count'] > 1 and not m['excluded']) / ptcount
+        spluumtotal / splcount, total=splmuttotal / splcount)
+    splmutgt1total = sum(m['SampleCount'] for m in mutations
+                         if m['Count'] > 1 and not m['excluded'])
     yield make_row(
-        '# Mutations per Patient',
+        '# Mutations per Sample',
         'Gene={}, Category={}, NumSequences>1'.format(gene, cat),
-        ptseqtotal, total=ptmuttotal)
+        splmutgt1total / splcount, total=splmuttotal / splcount)
+
+    spluumeq1total = sum(
+        m['SampleCount'] for m in mutations if m['Count'] == 1
+        and m['isUnusual'] and not m['excluded'])
+    spluumgt1total = sum(
+        m['SampleCount'] for m in mutations if m['Count'] > 1
+        and m['isUnusual'] and not m['excluded'])
     yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, NumSequences>1, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['Count'] > 1
-            and m['isUnusual'] and not m['IsAPOBEC'] and
-            not m['excluded']) / ptcount,
-        total=ptseqtotal)
+        '# Mutations',
+        'Gene={}, Category={}, NumSequences=1, '
+        'IsUnusual'.format(gene, cat),
+        spluumeq1total,
+        total=spluumtotal)
+    _, p, _, _ = chi2_contingency([
+        [spluumeq1total, splmuttotal - spluumeq1total],
+        [spluumgt1total, splmuttotal - spluumgt1total]
+    ])
     yield make_row(
-        '# Mutations per Patient',
+        '# Mutations',
         'Gene={}, Category={}, NumSequences>1, '
         'IsUnusual'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['Count'] > 1
-            and m['isUnusual'] and
-            not m['excluded']) / ptcount,
-        total=ptseqtotal)
-    ptpttotal = sum(m['PatientCount'] for m in mutations
-                    if m['PatientCount'] > 1 and not m['excluded']) / ptcount
+        spluumgt1total,
+        total=spluumtotal,
+        p_value=p)
     yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, NumPatients>1'.format(gene, cat),
-        ptpttotal, total=ptmuttotal)
-    yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, NumPatients>1, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
-            and m['isUnusual'] and not m['IsAPOBEC'] and
-            not m['excluded']) / ptcount,
-        total=ptpttotal)
-    yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, NumPatients>1, '
+        '# Mutations per Sample',
+        'Gene={}, Category={}, NumSequences=1, '
         'IsUnusual'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
-            and m['isUnusual'] and
-            not m['excluded']) / ptcount,
-        total=ptpttotal)
+        spluumeq1total / splcount,
+        total=splmuttotal / splcount)
     yield make_row(
-        '# Mutations per Patient',
+        '# Mutations per Sample',
         'Gene={}, Category={}, NumSequences>1, '
-        'IsAPOBEC'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['Count'] > 1
-            and m['IsAPOBEC']) / ptcount)
-    yield make_row(
-        '# Mutations per Patient',
-        'Gene={}, Category={}, NumPatients>1, '
-        'IsAPOBEC'.format(gene, cat),
-        sum(m['PatientCount'] for m in mutations if m['PatientCount'] > 1
-            and m['IsAPOBEC']) / ptcount)
+        'IsUnusual'.format(gene, cat),
+        spluumgt1total / splcount,
+        total=splmuttotal / splcount)
+    # splpttotal = sum(m['SampleCount'] for m in mutations
+    #                  if m['PatientCount'] > 1
+    #                  and not m['excluded']) / splcount
+    # yield make_row(
+    #     '# Mutations per Sample',
+    #     'Gene={}, Category={}, NumPatients>1'.format(gene, cat),
+    #     splpttotal, total=splmuttotal)
+    # yield make_row(
+    #     '# Mutations per Sample',
+    #     'Gene={}, Category={}, NumPatients>1, '
+    #     'IsUnusual'.format(gene, cat),
+    #     sum(m['SampleCount'] for m in mutations if m['PatientCount'] > 1
+    #         and m['isUnusual'] and
+    #         not m['excluded']) / splcount,
+    #     total=splpttotal)
+    # yield make_row(
+    #     '# Mutations per Sample',
+    #     'Gene={}, Category={}, NumSequences>1, '
+    #     'IsAPOBEC'.format(gene, cat),
+    #     sum(m['SampleCount'] for m in mutations if m['Count'] > 1
+    #         and m['IsAPOBEC']) / splcount)
+    # yield make_row(
+    #     '# Mutations per Sample',
+    #     'Gene={}, Category={}, NumPatients>1, '
+    #     'IsAPOBEC'.format(gene, cat),
+    #     sum(m['SampleCount'] for m in mutations if m['PatientCount'] > 1
+    #         and m['IsAPOBEC']) / splcount)
 
     muttotal = len([m for m in mutations if not m['excluded']])
     yield make_row(
         '# Uniq. Mutations',
         'Gene={}, Category={}'.format(gene, cat),
         muttotal)
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        len([m for m in mutations if
-             m['isUnusual'] and not m['IsAPOBEC'] and not m['excluded']]),
-        total=muttotal)
     yield make_row(
         '# Uniq. Mutations',
         'Gene={}, Category={}, '
@@ -202,13 +200,6 @@ def prevalence_stat(gene, cat, ptcount):
     yield make_row(
         '# Uniq. Mutations',
         'Gene={}, Category={}, NumSequences>1, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        len([m for m in mutations if m['Count'] > 1
-            and m['isUnusual'] and not m['IsAPOBEC'] and not m['excluded']]),
-        total=seqtotal)
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, NumSequences>1, '
         'IsUnusual'.format(gene, cat),
         len([m for m in mutations if m['Count'] > 1
             and m['isUnusual'] and not m['excluded']]),
@@ -218,56 +209,49 @@ def prevalence_stat(gene, cat, ptcount):
         'Gene={}, Category={}, NumSequences>1, '
         'IsAPOBEC'.format(gene, cat),
         len([m for m in mutations if m['Count'] > 1 and m['IsAPOBEC']]))
-    pttotal = len([m for m in mutations
-                   if m['PatientCount'] > 1 and not m['excluded']])
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, NumPatients>1'.format(gene, cat),
-        pttotal, total=muttotal)
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, NumPatients>1, '
-        'IsUnusual, NotAPOBEC'.format(gene, cat),
-        len([m for m in mutations if m['PatientCount'] > 1
-             and m['isUnusual'] and not m['IsAPOBEC']
-             and not m['excluded']]),
-        total=pttotal)
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, NumPatients>1, '
-        'IsUnusual'.format(gene, cat),
-        len([m for m in mutations if m['PatientCount'] > 1
-             and m['isUnusual'] and not m['excluded']]),
-        total=pttotal)
-    yield make_row(
-        '# Uniq. Mutations',
-        'Gene={}, Category={}, NumPatients>1, '
-        'IsAPOBEC'.format(gene, cat),
-        len([m for m in mutations if m['PatientCount'] > 1 and m['IsAPOBEC']]))
+    # pttotal = len([m for m in mutations
+    #                if m['PatientCount'] > 1 and not m['excluded']])
+    # yield make_row(
+    #     '# Uniq. Mutations',
+    #     'Gene={}, Category={}, NumPatients>1'.format(gene, cat),
+    #     pttotal, total=muttotal)
+    # yield make_row(
+    #     '# Uniq. Mutations',
+    #     'Gene={}, Category={}, NumPatients>1, '
+    #     'IsUnusual'.format(gene, cat),
+    #     len([m for m in mutations if m['PatientCount'] > 1
+    #          and m['isUnusual'] and not m['excluded']]),
+    #     total=pttotal)
+    # yield make_row(
+    #     '# Uniq. Mutations',
+    #     'Gene={}, Category={}, NumPatients>1, '
+    #     'IsAPOBEC'.format(gene, cat),
+    #     len([m for m in mutations if
+    #          m['PatientCount'] > 1 and m['IsAPOBEC']]))
     yield make_linregress_row(
         'Prevalence Correlation b/t SGS and HIVDB',
         'Gene={}, Category={}'.format(gene, cat),
         [(m['sgsPcnt'], m['dbPcnt']) for m in mutations if not m['excluded']])
 
 
-def overall_prevalence_stat():
-    mutations = sum([
-        load_aggregated_mutations(gene, 'All') for gene in GENES
-    ], [])
-    muttotal = len(mutations)
-    pttotal = len([m for m in mutations if m['PatientCount'] > 1])
-    yield make_row(
-        '# Uniq. Mutations',
-        'Category=All, NumPatients>1',
-        pttotal, total=muttotal)
-    pttotal2 = len([m for m in mutations if m['PatientCount'] > 2])
-    yield make_row(
-        '# Uniq. Mutations',
-        'Category=All, NumPatients>2',
-        pttotal2, total=muttotal)
+# def overall_prevalence_stat():
+#     mutations = sum([
+#         load_aggregated_mutations(gene, 'All') for gene in GENES
+#     ], [])
+#     muttotal = len(mutations)
+#     pttotal = len([m for m in mutations if m['PatientCount'] > 1])
+#     yield make_row(
+#         '# Uniq. Mutations',
+#         'Category=All, NumPatients>1',
+#         pttotal, total=muttotal)
+#     pttotal2 = len([m for m in mutations if m['PatientCount'] > 2])
+#     yield make_row(
+#         '# Uniq. Mutations',
+#         'Category=All, NumPatients>2',
+#         pttotal2, total=muttotal)
 
 
-def basic_stat(sequences):
+def basic_stat(sequences, outcond=''):
     pmids = set()
     ptids = set()
     pttps = defaultdict(set)
@@ -275,11 +259,14 @@ def basic_stat(sequences):
     generangeseqs = Counter()
     geneptids = defaultdict(set)
     genepttps = defaultdict(set)
+    subtypepttps = defaultdict(set)
     rxptids = defaultdict(set)
+    rxpttps = defaultdict(set)
     subtypeseqs = Counter()
     apobecseqs = Counter()
     subtypeptids = defaultdict(set)
     pttpseqs = Counter()
+    outcond0 = outcond.strip(' ,')
     for seq in sequences:
         pmids.add(seq['MedlineID'])
         sierra = seq['_Sierra']
@@ -288,11 +275,13 @@ def basic_stat(sequences):
         ptids.add(ptid)
         rx = seq['Rx']
         rxptids[rx].add(ptid)
+        rxpttps[rx].add(pttp)
         pttps[ptid].add(pttp)
         pttpseqs[pttp] += 1
         subtype = get_subtype(sierra)
         subtypeseqs[subtype] += 1
         subtypeptids[subtype].add(ptid)
+        subtypepttps[subtype].add(pttp)
         for geneseq in sierra['alignedGeneSequences']:
             gene = geneseq['gene']['name']
             geneseqs[gene] += 1
@@ -315,105 +304,124 @@ def basic_stat(sequences):
             if numapobecs > 0:
                 apobecseqs[(gene, numapobecs)] += 1
 
-    yield make_row('# Studies', None, len(pmids))
+    yield make_row('# Studies', outcond0, len(pmids))
 
     totalseqs = len(sequences)
-    yield make_row('# Sequences', None, totalseqs)
+    yield make_row('# Sequences', outcond0, totalseqs)
     for gene in GENES:
         yield make_row('# Sequences',
-                       'Gene={}'.format(gene),
+                       outcond + 'Gene={}'.format(gene),
                        geneseqs[gene],
                        total=totalseqs)
         addcond = ', MinPos=1, MaxPos=240' if gene == 'RT' else ''
         yield make_row('# Sequences',
-                       'Gene={}{}, NumAPOBECs=1'.format(gene, addcond),
+                       outcond + 'Gene={}{}, NumAPOBECs=1'
+                       .format(gene, addcond),
                        apobecseqs[(gene, 1)],
                        total=totalseqs)
         yield make_row('# Sequences',
-                       'Gene={}{}, NumAPOBECs=2'.format(gene, addcond),
+                       outcond + 'Gene={}{}, NumAPOBECs=2'
+                       .format(gene, addcond),
                        apobecseqs[(gene, 2)],
                        total=totalseqs)
         yield make_row('# Sequences',
-                       'Gene={}{}, NumAPOBECs>=3'.format(gene, addcond),
+                       outcond + 'Gene={}{}, NumAPOBECs>=3'
+                       .format(gene, addcond),
                        apobecseqs[(gene, 3)],
                        total=totalseqs)
 
     for subset, value in generangeseqs.items():
-        yield make_row('# Sequences', subset, value, total=totalseqs)
+        yield make_row('# Sequences', outcond + subset, value, total=totalseqs)
 
     for subtype in SUBTYPES:
         yield make_row('# Sequences',
-                       'Subtype={}'.format(subtype),
+                       outcond + 'Subtype={}'.format(subtype),
                        subtypeseqs[subtype],
                        total=totalseqs)
 
     totalpts = len(ptids)
-    yield make_row('# Patients', None, totalpts)
+    yield make_row('# Patients', outcond0, totalpts)
     for gene in GENES:
         yield make_row('# Patients',
-                       'Gene={}'.format(gene),
+                       outcond + 'Gene={}'.format(gene),
                        len(geneptids[gene]),
                        total=totalpts)
     for subtype in SUBTYPES:
         yield make_row('# Patients',
-                       'Subtype={}'.format(subtype),
+                       outcond + 'Subtype={}'.format(subtype),
                        len(subtypeptids[subtype]),
                        total=totalpts)
         for gene in GENES:
             yield make_row('# Patients',
-                           'Subtype={}, Gene={}'.format(subtype, gene),
+                           outcond + 'Subtype={}, Gene={}'
+                           .format(subtype, gene),
                            len(subtypeptids[(subtype, gene)]),
                            total=totalpts)
     for rx in TREATMENTS:
         yield make_row('# Patients',
-                       'Rx={}'.format(rx),
+                       outcond + 'Rx={}'.format(rx),
                        len(rxptids[rx]),
                        total=totalpts)
         for gene in GENES:
             yield make_row('# Patients',
-                           'Rx={}, Gene={}'.format(rx, gene),
+                           outcond + 'Rx={}, Gene={}'.format(rx, gene),
                            len(rxptids[(rx, gene)]),
                            total=totalpts)
-    yield make_row('# Patients', 'NumSample=1',
+    yield make_row('# Patients', outcond + 'NumSample=1',
                    len([k for k, v in pttps.items() if len(v) == 1]),
                    total=totalpts)
-    yield make_row('# Patients', 'NumSample>1',
+    yield make_row('# Patients', outcond + 'NumSample>1',
                    len([k for k, v in pttps.items() if len(v) > 1]),
                    total=totalpts)
 
     totalpttps = sum(len(v) for v in pttps.values())
-    yield make_row('# Samples (Patient Time Points)', None, totalpttps)
+    yield make_row('# Samples (Patient Time Points)', outcond0, totalpttps)
     for gene in GENES:
         yield make_row('# Samples (Patient Time Points)',
-                       'Gene={}'.format(gene),
+                       outcond + 'Gene={}'.format(gene),
                        len(genepttps[gene]),
+                       total=totalpttps)
+    for subtype in SUBTYPES:
+        yield make_row('# Samples (Patient Time Points)',
+                       outcond + 'Subtype={}'.format(subtype),
+                       len(subtypepttps[subtype]),
+                       total=totalpttps)
+    for rx in TREATMENTS:
+        yield make_row('# Samples (Patient Time Points)',
+                       outcond + 'Rx={}'.format(rx),
+                       len(rxpttps[rx]),
                        total=totalpttps)
 
     yield make_percentile_row("Med. Samples per Patient",
-                              None, [len(v) for v in pttps.values()])
+                              outcond0, [len(v) for v in pttps.values()])
     yield make_percentile_row("Med. Sequences per Sample",
-                              None, pttpseqs.values())
+                              outcond0, pttpseqs.values())
 
 
 def main():
     sequences = load_sequences()
+    filtered_sequences = [s for s in sequences if s['_Filtered']]
     with open(REPORT_PATH, 'w') as fp:
         writer = csv.DictWriter(fp, header)
         writer.writeheader()
-        ptcount = {}
+        splcount = {}
         for row in basic_stat(sequences):
             writer.writerow(row)
-            if row['name'] == '# Patients':
-                if row['subset'] == 'Gene=PR':
-                    ptcount['PR'] = row['value']
-                elif row['subset'] == 'Gene=RT':
-                    ptcount['RT'] = row['value']
-                elif row['subset'] == 'Gene=IN':
-                    ptcount['IN'] = row['value']
+
+        for row in basic_stat(filtered_sequences, 'SequencesPerSample>9, '):
+            writer.writerow(row)
+            if row['name'] == '# Samples (Patient Time Points)':
+                if row['subset'].endswith('Gene=PR'):
+                    splcount['PR'] = row['value']
+                elif row['subset'].endswith('Gene=RT'):
+                    splcount['RT'] = row['value']
+                elif row['subset'].endswith('Gene=IN'):
+                    splcount['IN'] = row['value']
+
         for cat in CATEGORIES:
             for gene in GENES:
-                writer.writerows(prevalence_stat(gene, cat, ptcount[gene]))
-        writer.writerows(overall_prevalence_stat())
+                writer.writerows(prevalence_stat(gene, cat, splcount[gene]))
+        # writer.writerows(overall_prevalence_stat())
 
 
 if __name__ == '__main__':

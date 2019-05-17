@@ -117,6 +117,8 @@ def aggregate_aa_prevalence(gene, sequences,
     total = Counter()
     totalpt = defaultdict(set)
     resultpt = defaultdict(set)
+    totalspl = defaultdict(set)
+    resultspl = defaultdict(set)
     all_aas = list('ACDEFGHIKLMNPQRSTVWY-_X*')
     consensus = CONSENSUS[gene]
     genesize = len(consensus)
@@ -165,12 +167,15 @@ def aggregate_aa_prevalence(gene, sequences,
             codon = aligned_nas[max(0, (relpos - 2) * 3):(relpos + 1) * 3]
             shortcodon = aligned_nas[relpos * 3 - 3:relpos * 3]
             ptid = seqfact['PtIdentifier']
+            tp = seqfact['CollectionDate']
             codons[(pos, aa)][codon] += 1
             shortcodons[(pos, aa)][shortcodon] += 1
             codonspt[pos][ptid][codon] += 1
             shortcodonspt[pos][ptid][shortcodon] += 1
             resultpt[(pos, aa)].add(ptid)
             totalpt[pos].add(ptid)
+            resultspl[(pos, aa)].add((ptid, tp))
+            totalspl[pos].add((ptid, tp))
     return OrderedDict(((pos, aa), {
         'Gene': gene,
         'Category': category,
@@ -191,6 +196,8 @@ def aggregate_aa_prevalence(gene, sequences,
         'PosTotal': total[pos],
         'PatientCount': len(resultpt[(pos, aa)]),
         'PatientPosTotal': len(totalpt[pos]),
+        'SampleCount': len(resultspl[(pos, aa)]),
+        'SamplePosTotal': len(totalspl[pos]),
         'IsAPOBEC': (gene, pos, aa) in APM,
     }) for (pos, aa), count in result.items())
 
@@ -206,8 +213,9 @@ def main():
     }
     header = ['Gene', 'Category', 'Pos', 'AA', 'FromCodons', 'ToCodons',
               'FromCodonsCtx', 'ToCodonsCtx', 'Pcnt', 'Count', 'PosTotal',
-              'PatientCount', 'PatientPosTotal', 'IsAPOBEC']
-    sequences = load_sequences()
+              'PatientCount', 'PatientPosTotal', 'SampleCount',
+              'SamplePosTotal', 'IsAPOBEC']
+    sequences = load_sequences(filtered=True)
     for gene in ('PR', 'RT', 'IN'):
         all_prevalence = []
         for cat, func in categories.items():

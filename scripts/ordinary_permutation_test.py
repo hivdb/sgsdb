@@ -22,32 +22,30 @@ UUM = unusual_mutation_map()
 APM = apobec_mutation_map()
 
 SUBTYPE_CATEGORIES = {
-    'SubtypeB': models.Patient.isolates.any(
-        models.Isolate._subtype.has(
-            models.Subtype.subtype == 'B'
-        ),
+    'SubtypeB': models.Isolate._subtype.has(
+        models.Subtype.subtype == 'B'
     ),
-    'SubtypeC': models.Patient.isolates.any(
-        models.Isolate._subtype.has(
-            models.Subtype.subtype == 'C'
-        ),
+    'SubtypeC': models.Isolate._subtype.has(
+        models.Subtype.subtype == 'C'
     ),
-    'SubtypeOther': ~models.Patient.isolates.any(
-        models.Isolate._subtype.has(
-            models.Subtype.subtype.in_(['B', 'C'])
-        ),
-    )
+    'SubtypeOther': ~models.Isolate._subtype.has(
+        models.Subtype.subtype.in_(['B', 'C', 'O', 'N', 'P', 'CPZ'])
+    ),
 }
 RX_CATEGORIES = {
-    'RxART': models.Patient.treatments.any(
-        models.RxHistory.regimen_name != 'None'
+    'RxART': models.Isolate.patient.has(
+        models.Patient.treatments.any(
+            models.RxHistory.regimen_name != 'None'
+        )
     ),
-    'RxNaive': models.Patient.treatments.any(
-        models.RxHistory.regimen_name == 'None'
+    'RxNaive': models.Isolate.patient.has(
+        models.Patient.treatments.any(
+            models.RxHistory.regimen_name == 'None'
+        )
     ),
 }
 
-PATIENT_POOL = {
+SAMPLE_POOL = {
     (c1, c2): []
     for c1 in SUBTYPE_CATEGORIES
     for c2 in RX_CATEGORIES
@@ -77,27 +75,25 @@ def load_all(query, limit=5000):
             break
 
 
-def patient_pool(cat1, cat2, gene):
-    if not PATIENT_POOL[(cat1, cat2)]:
-        Patient = models.Patient
+def sample_pool(cat1, cat2, gene):
+    if not SAMPLE_POOL[(cat1, cat2)]:
         Isolate = models.Isolate
         Sequence = models.Sequence
+        Species = models.Species
         ClinicalIsolate = models.ClinicalIsolate
         query = (
-            Patient.query
+            Isolate.query
             .filter(
-                Patient.id != 11630,
-                Patient.isolates.any(db.and_(
-                    Isolate.gene == gene,
-                    Isolate.isolate_type == 'Clinical',
-                    Isolate.clinical_isolate.has(
-                        ClinicalIsolate.source == 'Plasma'
-                    )
-                ))
+                Isolate.patient_id != 11630,
+                Isolate.gene == gene,
+                Isolate.isolate_type == 'Clinical',
+                Isolate.clinical_isolate.has(
+                    ClinicalIsolate.source == 'Plasma'
+                ),
+                Isolate._species.has(Species.species == 'HIV1')
             )
             .options(
-                db.selectinload(Patient.isolates)
-                .selectinload(Isolate.sequences)
+                db.selectinload(Isolate.sequences)
                 .joinedload(Sequence.derived_mutations))
         )
         for c1, criterion1 in SUBTYPE_CATEGORIES.items():
@@ -105,13 +101,13 @@ def patient_pool(cat1, cat2, gene):
                 print(c1, c2, file=sys.stderr)
                 parquery = (
                     query.filter(criterion1, criterion2)
-                    .order_by(Patient.id))
-                PATIENT_POOL[(c1, c2)] = list(load_all(parquery))
-    return PATIENT_POOL[(cat1, cat2)]
+                    .order_by(Isolate.id))
+                SAMPLE_POOL[(c1, c2)] = list(load_all(parquery))
+    return SAMPLE_POOL[(cat1, cat2)]
 
 
-def get_random_patients(size, gene, profile):
-    patients = []
+def get_random_samples(size, gene, profile):
+    samples = []
     partialsizes = []
     for cat1, criterion1 in SUBTYPE_CATEGORIES.items():
         ratio = profile['{}Ratio'.format(cat1)]
@@ -119,11 +115,11 @@ def get_random_patients(size, gene, profile):
         for cat2, criterion2 in RX_CATEGORIES.items():
             ratio = profile['{}Ratio'.format(cat2)]
             catsize2 = int(catsize1 * ratio)
-            pool = patient_pool(cat1, cat2, gene)
-            ppatients = random.sample(pool, catsize2)
-            partialsizes.append(len(ppatients))
-            patients += ppatients
-    return patients, partialsizes
+            pool = sample_pool(cat1, cat2, gene)
+            psamples = random.sample(pool, catsize2)
+            partialsizes.append(len(psamples))
+            samples += psamples
+    return samples, partialsizes
 
 
 def get_single_isolates(patients, gene):
@@ -186,21 +182,16 @@ def count_mutations(isolates):
 
 
 def entrypoint(gene, profile, times):
-    size = profile['{}NumPatients'.format(gene)]
-    print('# Patients', '# Isolates',
-          '# Mutations', '# Unusual Mutations',
-          '% Unusual Mutations',
-          '# APOBEC Mutations',
-          '% APOBEC Mutations',
-          *['# Pts ({} {})'.format(s, r)
+    size = profile['{}NumSamples'.format(gene)]
+    print('# Samples', '# Mutations', '# Unusual Mutations',
+          '% Unusual Mutations', '# APOBEC Mutations', '% APOBEC Mutations',
+          *['# Samples ({} {})'.format(s, r)
             for s in SUBTYPE_CATEGORIES
             for r in RX_CATEGORIES],
           sep='\t')
     for _ in range(int(times)):
-        patients, psizes = get_random_patients(size, gene, profile)
-        row = [len(patients)]
-        isolates = get_single_isolates(patients, gene)
-        row.append(len(isolates))
+        isolates, psizes = get_random_samples(size, gene, profile)
+        row = [len(isolates)]
         row.extend(count_mutations(isolates))
         row.extend(psizes)
         print(*row, sep='\t')

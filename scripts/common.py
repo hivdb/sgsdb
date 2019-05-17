@@ -2,6 +2,7 @@ import os
 import csv
 import json
 from decimal import Decimal
+from collections import Counter
 
 from hivdbql import app
 
@@ -42,7 +43,7 @@ def apobec_mutation_map():
     return {(m.gene, m.pos, m.hm) for m in apobecs}
 
 
-def load_sequences():
+def load_sequences(filtered=False):
     sierra_reports = load_sierra_reports()
     with open(FACTSHEET) as fp:
         if fp.read(1) != '\ufeff':
@@ -52,6 +53,14 @@ def load_sequences():
             if seq['_Include'] == 'TRUE':
                 seq['_Sierra'] = sierra_reports[seq['Accession']]
                 result.append(seq)
+        counter = Counter()
+        for seq in result:
+            counter[(seq['PtIdentifier'], seq['CollectionDate'])] += 1
+        for seq in result:
+            seq['_Filtered'] = \
+                counter[(seq['PtIdentifier'], seq['CollectionDate'])] >= 10
+        if filtered:
+            result = [seq for seq in result if seq['_Filtered']]
         return result
 
 
@@ -73,7 +82,8 @@ def load_aggregated_mutations(gene, subset='All'):
                 row['dbPcnt'] = .0
                 row['pcntFold'] = 0xffff
             for k in ('Pos', 'Count', 'PosTotal',
-                      'PatientCount', 'PatientPosTotal'):
+                      'PatientCount', 'PatientPosTotal',
+                      'SampleCount', 'SamplePosTotal'):
                 row[k] = int(row[k])
             for k in ('sgsPcnt', 'dbPcnt', 'pcntFold'):
                 row[k] = float(row[k])
