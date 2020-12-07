@@ -1,10 +1,10 @@
 import os
 import csv
 import json
+import requests
 from decimal import Decimal
+from functools import cache  # require Python 3.9
 from collections import Counter
-
-from hivdbql import app
 
 BASEDIR = os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))
@@ -12,9 +12,14 @@ BASEDIR = os.path.dirname(
 
 FACTSHEET = os.path.join(BASEDIR, 'data', 'SGS.sequences.fact.csv')
 SIEERAREPORT = os.path.join(BASEDIR, 'local', 'SGS.sequences.json')
-DB_AA_VARIANTS_TABLE = os.path.join(
-    BASEDIR, 'data', 'prevalence', 'dbAminoAcidVariantsAll.csv')
-
+DB_AA_VARIANTS_TABLE = (
+    'https://raw.githubusercontent.com/hivdb/hivfacts/'
+    'master/data/aapcnt/rx-all_subtype-all.json'
+)
+APOBEC_TABLE = (
+    'https://raw.githubusercontent.com/hivdb/hivfacts/'
+    'master/data/apobecs/apobecs.json'
+)
 AGG_MUTATIONS = {
     'PR': os.path.join(BASEDIR, 'data', 'prevalence', 'CompPR{}.csv'),
     'RT': os.path.join(BASEDIR, 'data', 'prevalence', 'CompRT{}.csv'),
@@ -22,25 +27,23 @@ AGG_MUTATIONS = {
 }
 PREC3 = Decimal('1.000')
 
-models = app.models
 
-
+@cache
 def unusual_mutation_map():
     uum = set()
-    with open(DB_AA_VARIANTS_TABLE) as fp:
-        data = csv.DictReader(fp)
-        for row in data:
-            if row['isUnusual'] == 'False':
-                continue
-            uum.add((row['gene'], int(row['position']), row['aa']))
+    resp = requests.get(DB_AA_VARIANTS_TABLE)
+    data = resp.json()
+    for row in data:
+        if not row['isUnusual']:
+            continue
+        uum.add((row['gene'], row['position'], row['aa']))
     return uum
 
 
+@cache
 def apobec_mutation_map():
-    apobecs = models.LUAPOBEC.query.filter(
-        models.LUAPOBEC.is_apobec.is_(True)
-    )
-    return {(m.gene, m.pos, m.hm) for m in apobecs}
+    resp = requests.get(APOBEC_TABLE)
+    return {(r['gene'], r['position'], r['aa']) for r in resp.json()}
 
 
 def load_sequences(filtered=False):

@@ -97,7 +97,7 @@ def get_sequences(pmid, accs, step=24):
             if 'GBSeq_comment' in seqdict:
                 lanldata = parse_lanl_data(seqdict['GBSeq_comment'])
                 source = lanldata.pop('sample tissue', source)
-                patient = lanldata.pop('patient code')
+                patient = lanldata.pop('patient code', '')
                 extra = lanldata
             yield SequenceTuple(
                 seqdict['GBSeq_primary-accession'],  # accession
@@ -152,7 +152,7 @@ def write_sequences_fact(sequences, sierra_result, fp):
             seq.pmid, seq.accession, seq.isolate_date or '',
             seq.isolate_name or '', seq.patient or '',
             seq.source or '', seq.header,
-            *[seq.extra[k] for k in extrakeys]
+            *[seq.extra.get(k, "") for k in extrakeys]
         ])
     if accs:
         print('{} non-pol sequences are removed from the final result.'
@@ -164,14 +164,38 @@ def write_sierra_result(sierra_result, fp):
     json.dump(data, fp, indent=2)
 
 
+def expand_accs(accs):
+    expanded_accs = []
+    for match in re.finditer(
+        r'([A-Z]{1,2})(\d+)(?:(?:\s*-\s*|\s+[Tt][Oo]\s+)([A-Z]{1,2})(\d+))?',
+        ' '.join(accs)
+    ):
+        start_ab, start_num, end_ab, end_num = match.groups()
+        if end_ab is None:
+            expanded_accs.append(start_ab + start_num)
+            continue
+        if start_ab != end_ab:
+            raise ValueError(
+                'Can not expand accession range "{}{}-{}{}"'.format(
+                    start_ab, start_num, end_ab, end_num
+                )
+            )
+        for num in range(int(start_num), int(end_num) + 1):
+            expanded_accs.append('{}{}'.format(start_ab, num))
+    return expanded_accs
+
+
 def single(pmid, accs=None):
     if not re.match(r'^\d+$', pmid):
         print('PMID must be a number (received {!r}'
               .format(pmid), file=sys.stderr)
-        exit(2)
+        return 2
 
-    # fetch accessions
-    if not accs:
+    if accs:
+        # expand accession range
+        accs = expand_accs(accs)
+    else:
+        # fetch accessions
         print('Fetching GenBank accession number from Entrez ...',
               file=sys.stderr, end='\r')
         accs = get_accs(pmid)
@@ -181,7 +205,7 @@ def single(pmid, accs=None):
         else:
             print('Fetching GenBank accession number from Entrez:',
                   'not found.', file=sys.stderr)
-            exit(3)
+            return 3
 
     # fetch sequences
     sequences = list(get_sequences(pmid, accs))
@@ -200,6 +224,7 @@ def single(pmid, accs=None):
         write_sierra_result(sierra_result, fp)
     print('- {}'.format(sierra_file), file=sys.stderr)
     print('- {}'.format(fact_table), file=sys.stderr)
+    return 0
 
 
 def main():
@@ -222,7 +247,8 @@ def main():
                   .format(sys.argv[0]), file=sys.stderr)
             exit(125)
         (pmid, *accs) = sys.argv[2:]
-        single(pmid, accs)
+        retcode = single(pmid, accs)
+        exit(retcode)
 
 
 if __name__ == '__main__':
